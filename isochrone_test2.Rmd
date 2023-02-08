@@ -53,9 +53,6 @@ leaflet(data = iso, width = "100%", height = "1000px" ) %>%
   addMeasure(primaryLengthUnit = "kilometers",primaryAreaUnit = "sqmeters", localization = "ru",
              activeColor = "#404040", completedColor = "#202020")
 ```
-```{r}
-print(iso)
-print(factpal)
-```
+
 
 
