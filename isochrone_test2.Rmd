@@ -1,0 +1,52 @@
+
+```{r, echo=FALSE}
+#knitr::opts_chunk$set(error = TRUE)
+```
+
+```{r,include=FALSE}
+library(osrm)
+library(tidyverse)
+library(leaflet)
+
+# The central location point that will be used to calculate the isochrones
+loc_lat = 55.720144
+loc_long = 37.609029
+
+loc <- c(loc_long, loc_lat)
+
+```
+
+```{r,include=FALSE}
+iso <- osrmIsochrone(loc, breaks = seq(from = 0, to = 360, by = 60), res = 30, osrm.profile = "foot")
+#car, #bike #foot
+```
+
+```{r,echo=FALSE}
+iso$travel_times <- factor(paste(iso$min, "to", iso$max, "min"),
+                              levels = c("0 to 60 min", "60 to 120 min", "120 to 180 min", 
+                                         "180 to 240 min", "240 to 300 min", "300 to 360 min"))
+
+# Colour palette for each area
+factpal <- colorFactor(rev(heat.colors(6)), iso$travel_times)
+
+# Plot with leaflet
+leaflet(data = iso, width = "100%", height = "1000px" ) %>% 
+  
+  setView(lng = loc_long, lat = loc_lat, zoom = 10) %>%
+  
+  addTiles() %>% 
+  
+  addMarkers(lng = loc_long, lat = loc_lat, popup = "Campus") %>%
+  
+  addPolygons(fill = TRUE, stroke=TRUE, color = "black",
+                                        fillColor = ~factpal(iso$travel_times),
+                                        weight = 0.5, fillOpacity = 0.3,
+                                        data = iso, popup = iso$travel_times,
+                                        group = "Time") %>% 
+  # Legend
+  addLegend("bottomright", pal = factpal, values = iso$travel_times, title = "Time") %>%
+  # Distance measure
+  addMeasure(primaryLengthUnit = "kilometers",primaryAreaUnit = "sqmeters", localization = "ru",
+             activeColor = "#404040", completedColor = "#202020")
+```
+
