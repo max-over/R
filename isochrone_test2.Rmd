@@ -7,7 +7,9 @@
 library(osrm)
 library(tidyverse)
 library(leaflet)
-
+library(dplyr)
+library(sf)
+library(mapsf)
 # The central location point that will be used to calculate the isochrones
 loc_lat = 55.720144
 loc_long = 37.609029
@@ -17,7 +19,7 @@ loc <- c(loc_long, loc_lat)
 ```
 
 ```{r,include=FALSE}
-iso <- osrmIsochrone(loc, breaks = seq(from = 0, to = 360, by = 60), res = 30, osrm.profile = "foot")
+iso <- osrmIsochrone(loc, breaks = seq(from = 0, to = 360, by = 60), res = 70, osrm.profile = "foot")
 #car, #bike #foot
 ```
 
@@ -27,7 +29,8 @@ iso$travel_times <- factor(paste(iso$min, "to", iso$max, "min"),
                                          "180 to 240 min", "240 to 300 min", "300 to 360 min"))
 
 # Colour palette for each area
-factpal <- colorFactor(rev(heat.colors(6)), iso$travel_times)
+#factpal <- colorFactor(rev(heat.colors(6)), iso$travel_times)
+col = colorRampPalette(colors = c('yellow', 'red'))(6)
 
 # Plot with leaflet
 leaflet(data = iso, width = "100%", height = "1000px" ) %>% 
@@ -39,7 +42,8 @@ leaflet(data = iso, width = "100%", height = "1000px" ) %>%
   addMarkers(lng = loc_long, lat = loc_lat, popup = "Campus") %>%
   
   addPolygons(fill = TRUE, stroke=TRUE, color = "black",
-                                        fillColor = ~factpal(iso$travel_times),
+                                        #fillColor = ~factpal(iso$travel_times),
+                                        fillColor = col,
                                         weight = 0.5, fillOpacity = 0.3,
                                         data = iso, popup = iso$travel_times,
                                         group = "Time") %>% 
@@ -49,4 +53,9 @@ leaflet(data = iso, width = "100%", height = "1000px" ) %>%
   addMeasure(primaryLengthUnit = "kilometers",primaryAreaUnit = "sqmeters", localization = "ru",
              activeColor = "#404040", completedColor = "#202020")
 ```
+```{r}
+print(iso)
+print(factpal)
+```
+
 
