@@ -1,0 +1,137 @@
+```{r}
+install.packages("tidyverse")
+install.packages("tidygeocoder")
+install.packages("osrm")
+install.packages("mapview")
+install.packages("sf")
+install.packages("stplanr")
+install.packages("googlesheets4")
+```
+
+```{r}
+library("tidyverse")
+library("tidygeocoder")
+library("osrm")
+library("mapview")
+library("sf")
+library("stplanr")
+library("googlesheets4")
+```
+
+
+```{r}
+gs4_deauth()
+map_data <- read_sheet('https://docs.google.com/spreadsheets/d/1m3cjpQ0jhxt47ICGhAZ4goTNe_7ToBNF2cKheocv8zo/edit?usp=sharing', sheet = "dns1")
+map_data
+```
+
+```{r}
+reverse <- map_data %>%
+  reverse_geocode(lat=lat, long = long, method = 'osm', address = address_found, full_results = TRUE)
+reverse
+```
+
+```{r}
+reverse_final <- reverse %>%
+  select(location, lat, long,address_found)
+reverse_final
+```
+
+```{r}
+#gs4_deauth()
+gs4_auth()
+```
+
+```{r}
+ss <- gs4_get('https://docs.google.com/spreadsheets/d/1m3cjpQ0jhxt47ICGhAZ4goTNe_7ToBNF2cKheocv8zo/edit?usp=sharing')
+ss
+```
+
+```{r}
+sheet_write (reverse_final, ss, sheet='location_dns')
+```
+
+```{r}
+stops_hse <- st_as_sf(reverse_final, coords = c("long", "lat"), crs = "WGS84")
+osrmTable_hse <- osrmTable(stops_hse[1:8,], stops_hse[1:8,], osrm.profile = "car" )
+osrmTable_hse
+osrmTable_bike_hse <- osrmTable(stops_hse[1:8,], stops_hse[1:8,], osrm.profile = "bike" )
+osrmTable_bike_hse
+stops_hse
+```
+
+```{r}
+trips_hse <- osrmTrip(loc = stops_hse[1:8,], overview = "full", osrm.profile = "car")
+trips_hse
+trips_bike_hse <- osrmTrip(loc = stops_hse[1:8,], overview = "full", osrm.profile = "bike")
+trips_bike_hse
+```
+
+```{r}
+mytrip <- trips_hse[[1]]$trip
+mytrip_summary <- trips_hse[[1]]$summary
+mytrip_bike <- trips_bike_hse[[1]]$trip
+mytrip_bike_summary <- trips_bike_hse[[1]]$summary
+```
+
+```{r}
+plot(st_geometry(mytrip), col = c('black','grey'), wd = 2)
+plot(st_geometry(stops_hse[1:8,]), cex =1.5, pch = 21, add = TRUE)
+text(st_coordinates(stops_hse[1:8,]), labels = row.names(stops_hse[1:8,]), pos = 2)
+```
+```{r}
+plot(st_geometry(mytrip_bike), col = c('black','grey'), wd = 2)
+plot(st_geometry(stops_hse[1:8,]), cex =1.5, pch = 21, add = TRUE)
+text(st_coordinates(stops_hse[1:8,]), labels = row.names(stops_hse[1:8,]), pos = 2)
+```
+
+
+```{r}
+mymap_new <- st_as_sf(map_data, coords = c("long","lat"), crs = 4326)
+mapview(mymap_new)
+```
+
+```{r}
+mapview(mytrip) + mapview(mymap_new, col.region = "red")
+```
+
+```{r}
+mapview(mytrip_bike) + mapview(mymap_new, col.region = "orange")
+```
+
+```{r}
+mytrip
+mytrip_summary
+```
+```{r}
+mytrip_bike
+mytrip_bike_summary
+```
+
+```{r}
+trip_tibble <- tibble(mytrip) %>% select(-geometry)
+trip_tibble
+```
+
+```{r}
+trip_tibble_bike <- tibble(mytrip_bike) %>% select(-geometry)
+trip_tibble_bike
+```
+
+```{r}
+sheet_write(trip_tibble, ss, sheet = 'route_data_car')
+sheet_write(trip_tibble_bike, ss, sheet = 'route_data_bike')
+```
+
+```{r}
+durations_df <- as.data.frame(osrmTable_hse$durations)
+durations_df
+durations_df_bike <- as.data.frame(osrmTable_bike_hse$durations)
+durations_df_bike
+```
+
+```{r}
+sheet_write(durations_df, ss, sheet = 'durations_matrix_car')
+sheet_write(durations_df_bike, ss, sheet = 'durations_matrix_bike')
+```
+
