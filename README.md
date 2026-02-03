@@ -5,6 +5,7 @@
 **EOQ** - RShiny application showing EOQ formula calculation
 
 **nvm** - Newsvendor inventory model example
+
 **nvmm** - Multiperiod inventory model example
 
 **test_routing** - RShiny application for reverse geocoding and route building (OSRM)
